@@ -11,11 +11,6 @@
       "host": "127.0.0.1",
       "remoteHost": "127.0.0.1",
       "port": 25567
-    },
-    {
-      "host": "gen-webserver.local",
-      "remoteHost": "127.0.0.1",
-      "port": 25567
     }
   ]
 }
