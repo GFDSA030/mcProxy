@@ -1,0 +1,30 @@
+# ワークフローの名前。
+name: Build
+
+# どういったイベントが発生したときにワークフローを実行するかを指定。
+on:
+  # ここでは変更がpushされたときをイベントとして指定。
+  - push
+
+# ワークフローが実行するジョブの一覧
+jobs:
+  # ビルドを行うジョブ
+  build:
+    # 最新のUbuntuでワークフローを実行
+    runs-on: ubuntu-latest
+    # ジョブが行うステップの一覧
+    steps:
+      # ソースコードをGitからチェックアウト
+      - uses: actions/checkout@v4
+      # Gradleラッパースクリプトが正しいものか確認
+      - uses: gradle/wrapper-validation-action@v1
+      # Java 21 を使えるようにする
+      - name: Set up Java 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: microsoft
+          java-version: 21
+      # Gradleビルドを実行
+      - uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build
