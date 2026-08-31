@@ -10,6 +10,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +41,9 @@ public class App {
         設定ロード
          */
         try {
+            if (Files.exists(Path.of("setting.json"))) {
+                System.out.println("setting.json not found");
+            }
             Setting.Config config = setting.load("setting.json");
 
             System.out.println(config.serverPort());
@@ -54,6 +59,7 @@ public class App {
                 );
             }
         } catch (IOException e) {
+            System.out.println("error with ioException");
             return;
         }
 
