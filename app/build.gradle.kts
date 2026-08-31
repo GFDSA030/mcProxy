@@ -55,3 +55,7 @@ tasks.jar {
         attributes["Main-Class"] = "org.example.App"
     }
 }
+
+tasks.withType<Jar>().configureEach {
+    archiveBaseName.set("mcProxy")
+}
