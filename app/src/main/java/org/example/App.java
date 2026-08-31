@@ -36,6 +36,13 @@ public class App {
 
     private static final ExecutorService POOL = Executors.newCachedThreadPool();
 
+    /*
+    TODO:
+    コマンド入力欄とログエリアの分離
+    設定のリロード
+    複数ポートのサポート
+    
+     */
     public static void main(String[] args) throws IOException {
         /*
         設定ロード
