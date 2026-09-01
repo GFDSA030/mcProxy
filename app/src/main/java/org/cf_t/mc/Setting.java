@@ -10,11 +10,19 @@ public class Setting {
 
     final private Gson gson = new Gson();
 
-    public record SvConfig(String host, String remoteHost, int port) {
+    public record SvConfig(
+            String host,
+            String remoteHost,
+            int port
+            ) {
 
     }
 
-    public record Config(String settingVer, int serverPort, SvConfig[] routings) {
+    public record Config(
+            String settingVer,
+            int serverPort,
+            int infoPort,
+            SvConfig[] routings) {
 
     }
 

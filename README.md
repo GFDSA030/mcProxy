@@ -12,6 +12,7 @@ hostにIPアドレスを指定すると動かない場合があるため要ド�
 {
   "settingVer": "0.0.1",
   "serverPort": 25565,
+  "infoPort":28080,
   "routings": [
     {
       "host": "localhost",

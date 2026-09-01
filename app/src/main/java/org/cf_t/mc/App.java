@@ -25,6 +25,7 @@ public class App {
     static pluginS plS = new pluginS();
 
     private static int LISTEN_PORT = 25565;
+    private static int infoLISTEN_PORT = 28080;
 
     /*
          * Minecraftのホスト名 → 転送先
@@ -58,6 +59,7 @@ public class App {
 
             System.out.println(config.serverPort());
             LISTEN_PORT = config.serverPort();
+            infoLISTEN_PORT = config.infoPort();
 
             for (Setting.SvConfig server : config.routings()) {
                 System.out.println(server.host());
@@ -77,7 +79,13 @@ public class App {
         System.out.println("Listening on 0.0.0.0:" + LISTEN_PORT);
 
         //クライアント情報サーバー
-        POOL.execute(() -> plS.serverLoop());
+        POOL.execute(() -> {
+            try {
+                plS.serverLoop(infoLISTEN_PORT);
+            } catch (IOException ex) {
+                System.getLogger(App.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+        });
 
         try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
             while (true) {
