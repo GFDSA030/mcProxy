@@ -34,7 +34,7 @@ localhost =>127.0.0.1:25566
 にルートされる
 
 ```bash
-java -jar app-all.jar
+java -jar mcProxy-all.jar
 ```
 
 で実行

@@ -22,6 +22,7 @@ public class Setting {
             String settingVer,
             int serverPort,
             int infoPort,
+            int pin,
             SvConfig[] routings) {
 
     }

@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.google.gson.Gson;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,7 +17,12 @@ import com.sun.net.httpserver.HttpServer;
 
 public class pluginS {
 
-    public void serverLoop(int port) throws IOException {
+    final private Gson gson = new Gson();
+
+    private int pin = 0000;
+
+    public void serverLoop(int port, int _pin) throws IOException {
+        pin = _pin;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new infoHandler());
         System.out.println("infoHandler wakes up: port=" + port);
@@ -31,19 +37,25 @@ public class pluginS {
 
             System.out.println("**************************************************");
 
-            // 開始行を取得
-            String startLine
-                    = t.getRequestMethod() + " "
-                    + t.getRequestURI().toString() + " "
-                    + t.getProtocol();
-            System.out.println(startLine);
+            final String Method = t.getRequestMethod();
+            final String uri = t.getRequestURI().toString();
+            final String protocol = t.getProtocol();
 
-            // リクエストヘッダを取得
-            Headers reqHeaders = t.getRequestHeaders();
-            for (String name : reqHeaders.keySet()) {
-                System.out.println(name + ": " + reqHeaders.getFirst(name));
+            if (Method != "GET" || protocol != "HTTP/1.1") {
+                return;
             }
+            //  // 開始行を取得
+            //         String startLine
+            //         = t.getRequestMethod() + " "
+            //         + t.getRequestURI().toString() + " "
+            //         + t.getProtocol();
+            // System.out.println(startLine);
 
+            // // リクエストヘッダを取得
+            // Headers reqHeaders = t.getRequestHeaders();
+            // for (String name : reqHeaders.keySet()) {
+            //     System.out.println(name + ": " + reqHeaders.getFirst(name));
+            // }
             // リクエストボディを取得
             InputStream is = t.getRequestBody();
             byte[] b = is.readAllBytes();
@@ -53,22 +65,21 @@ public class pluginS {
                 System.out.println(new String(b, StandardCharsets.UTF_8));
             }
 
-            // レスポンスボディを構築
-            // (ここでは Java 14 から正式導入された Switch Expressions と
-            //  Java 14 でプレビュー機能として使えるヒアドキュメント的な Text Blocks 機能を使ってみる)
-            String resBody = switch (t.getRequestURI().toString()) {
-                case "/hello" ->
-                    "{\"message\": \"Hello, World!\"}";
-                case "/foobar" ->
-                    """
-          {
-            "foo": "bar",
-            "ふー": "ばー"
-          }""";
-                default ->
-                    "{}";
-            };
-
+            //     // レスポンスボディを構築
+            //     // (ここでは Java 14 から正式導入された Switch Expressions と
+            //     //  Java 14 でプレビュー機能として使えるヒアドキュメント的な Text Blocks 機能を使ってみる)
+            //     String resBody = switch (t.getRequestURI().toString()) {
+            //         case "/hello" ->
+            //             "{\"message\": \"Hello, World!\"}";
+            //         case "/foobar" ->
+            //             """
+            //   {
+            //     "foo": "bar",
+            //     "ふー": "ばー"
+            //   }""";
+            //         default ->
+            //             "{}";
+            //     };
             // Content-Length 以外のレスポンスヘッダを設定
             Headers resHeaders = t.getResponseHeaders();
             resHeaders.set("Content-Type", "application/json");
@@ -82,12 +93,13 @@ public class pluginS {
 
             // レスポンスヘッダを送信
             int statusCode = 200;
-            long contentLength = resBody.getBytes(StandardCharsets.UTF_8).length;
+            // long contentLength = resBody.getBytes(StandardCharsets.UTF_8).length;
+            long contentLength = 0;
             t.sendResponseHeaders(statusCode, contentLength);
 
             // レスポンスボディを送信
             OutputStream os = t.getResponseBody();
-            os.write(resBody.getBytes());
+            // os.write(resBody.getBytes());
             os.close();
         }
     }

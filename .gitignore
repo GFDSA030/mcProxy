@@ -8,3 +8,5 @@ build
 .kotlin
 
 .vscode
+
+.LCK*~

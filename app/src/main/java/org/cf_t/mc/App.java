@@ -26,6 +26,7 @@ public class App {
 
     private static int LISTEN_PORT = 25565;
     private static int infoLISTEN_PORT = 28080;
+    private static int infoPIN = 0000;
 
     /*
          * Minecraftのホスト名 → 転送先
@@ -60,6 +61,7 @@ public class App {
             System.out.println(config.serverPort());
             LISTEN_PORT = config.serverPort();
             infoLISTEN_PORT = config.infoPort();
+            infoPIN = config.pin();
 
             for (Setting.SvConfig server : config.routings()) {
                 System.out.println(server.host());
@@ -81,7 +83,7 @@ public class App {
         //クライアント情報サーバー
         POOL.execute(() -> {
             try {
-                plS.serverLoop(infoLISTEN_PORT);
+                plS.serverLoop(infoLISTEN_PORT, infoPIN);
             } catch (IOException ex) {
                 System.getLogger(App.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }
