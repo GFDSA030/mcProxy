@@ -22,9 +22,9 @@ public class pluginS {
 
     final private Gson gson = new Gson();
 
-    private int pin = 0000;
+    private String pin = "0000";
 
-    public void serverLoop(int port, int _pin) throws IOException {
+    public void serverLoop(int port, String _pin) throws IOException {
         pin = _pin;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", infoHandler);
@@ -36,6 +36,16 @@ public class pluginS {
         @Override
         public void handle(HttpExchange he) throws IOException {
             Map<String, String> query = getQueryParams(he);
+
+            if (query.get("pin") == null ? pin != null : !query.get("pin").equals(pin)) {
+
+                he.sendResponseHeaders(200, 0);
+
+                try (OutputStream os = he.getResponseBody()) {
+                    os.close();
+                }
+                return;
+            }
 
             App.PlayerInfo info = App.getPlayerInfo(query.get("uuid"));
             String json = """
@@ -53,19 +63,12 @@ public class pluginS {
                     "application/json; charset=UTF-8"
             );
 
-            // System.out.print("start handle ... ");
-            // OutputStream os = he.getResponseBody();
-            // he.sendResponseHeaders(200, 0);
-            // os.write("This is only a test.".getBytes());
-            // os.write(json.getBytes());
             he.sendResponseHeaders(200, response.length);
 
             try (OutputStream os = he.getResponseBody()) {
                 os.write(response);
                 os.close();
             }
-            // System.out.println("");
-            // System.out.println("done!");
         }
     };
 

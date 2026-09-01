@@ -26,7 +26,7 @@ public class App {
 
     private static int LISTEN_PORT = 25565;
     private static int infoLISTEN_PORT = 28080;
-    private static int infoPIN = 0000;
+    private static String infoPIN = "0000";
 
     /*
          * Minecraftのホスト名 → 転送先
