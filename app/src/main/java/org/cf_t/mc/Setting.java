@@ -1,4 +1,4 @@
-package org.example;
+package org.cf_t.mc;
 
 import java.io.IOException;
 import java.nio.file.Files;

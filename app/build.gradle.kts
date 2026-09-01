@@ -39,7 +39,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.example.App"
+    mainClass = "org.cf_t.mc.App"
 }
 
 tasks.named<Test>("test") {
@@ -53,7 +53,7 @@ tasks.named<JavaExec>("run"){
 
 tasks.jar {
     manifest {
-        attributes["Main-Class"] = "org.example.App"
+        attributes["Main-Class"] = "org.cf_t.mc.App"
     }
 }
 

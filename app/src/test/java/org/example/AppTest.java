@@ -4,9 +4,10 @@
 package org.example;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.example.App;
+import org.cf_t.mc.App;
 
 class AppTest {
     @Test void appHasAGreeting() {
