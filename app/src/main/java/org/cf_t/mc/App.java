@@ -2,6 +2,7 @@ package org.cf_t.mc;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,6 +37,7 @@ public class App {
          * creative.example.com → 127.0.0.1:25568
      */
     private static final Map<String, Backend> ROUTES = new HashMap<>();
+    private static final Map<String, PlayerInfo> PlayerTable = new ConcurrentHashMap<>();
 
     private static final ExecutorService POOL = Executors.newCachedThreadPool();
 
@@ -162,14 +166,16 @@ public class App {
              */
             POOL.execute(() -> relay(
                     client,
-                    server));
+                    server,
+                    false));
 
             /*
                          * Server → Client
              */
             POOL.execute(() -> relay(
                     server,
-                    client));
+                    client,
+                    true));
 
         } catch (IOException e) {
             System.out.println(
@@ -279,27 +285,30 @@ public class App {
      */
     private static void relay(
             Socket from,
-            Socket to) {
+            Socket to,
+            boolean s2c) {
 
         try {
             InputStream in = from.getInputStream();
-
             OutputStream out = to.getOutputStream();
 
-            byte[] buffer = new byte[8192];
-
-            int read;
-
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-                out.flush();
+            /*
+             * Client -> Server の場合だけ
+             * Minecraftパケットとして解析する。
+             *
+             * Server -> Client は単純転送。
+             */
+            if (!s2c) {
+                relayClientToServer(in, out, from);
+            } else {
+                relayRaw(in, out);
             }
 
             /*
-         * from側がEOFになったら、
-         * to側の出力だけshutdownする。
-         *
-         * Socket自体をcloseしない。
+             * from側がEOFになったら、
+             * to側の出力だけshutdownする。
+             *
+             * Socket自体はcloseしない。
              */
             try {
                 to.shutdownOutput();
@@ -314,8 +323,232 @@ public class App {
                     + to.getRemoteSocketAddress()
                     + ": "
                     + e.getMessage());
-
         }
+    }
+
+    /**
+     * Client -> Server
+     *
+     * Minecraftのパケットフレームを解析しながら転送する。
+     */
+    private static void relayClientToServer(
+            InputStream in,
+            OutputStream out,
+            Socket clientSocket) throws IOException {
+
+        while (true) {
+
+            /*
+             * Packet Length
+             */
+            int packetLength;
+
+            try {
+                packetLength = readVarInt(in);
+            } catch (EOFException e) {
+                break;
+            }
+
+            if (packetLength < 0) {
+                throw new IOException("Invalid packet length: " + packetLength);
+            }
+
+            /*
+             * Packet Data
+             */
+            byte[] packetData = readFully(in, packetLength);
+
+            /*
+             * 元のパケットをそのまま転送する。
+             *
+             * length + packetData
+             */
+            writeVarInt(out, packetLength);
+            out.write(packetData);
+            out.flush();
+
+            /*
+             * Packet IDを確認
+             */
+            ByteArrayInputStream packetIn
+                    = new ByteArrayInputStream(packetData);
+
+            int packetId = readVarInt(packetIn);
+
+            /*
+             * Login Start
+             *
+             * Serverbound hello
+             * Packet ID = 0x00
+             */
+            if (packetId == 0) {
+                try {
+                    parseLoginStart(packetIn, clientSocket);
+                } catch (IOException e) {
+                    /*
+                     * 解析に失敗しても通信自体は止めない。
+                     */
+                    System.out.println(
+                            "Failed to parse Login Start from "
+                            + clientSocket.getRemoteSocketAddress()
+                            + ": "
+                            + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Login Startを解析する。
+     *
+     * Login Start:
+     *
+     * Packet ID Name String Player UUID UUID
+     */
+    private static void parseLoginStart(
+            InputStream in,
+            Socket clientSocket) throws IOException {
+
+        /*
+         * Name
+         */
+        String name = readString(in);
+
+        /*
+         * UUID
+         *
+         * Minecraft ProtocolではUUIDは16byte。
+         * Java UUIDのmost/least significant bitsとして読む。
+         */
+        UUID uuid = readUUID(in);
+
+        /*
+         * 接続元IP
+         */
+        String ip = getRemoteIp(clientSocket);
+
+        /*
+         * UUIDをキーとして保存
+         */
+        PlayerInfo info = new PlayerInfo(
+                name,
+                uuid.toString(),
+                ip
+        );
+
+        PlayerTable.put(uuid.toString(), info);
+
+        System.out.println(
+                "Login Start:"
+                + " name=" + name
+                + " uuid=" + uuid
+                + " ip=" + ip
+        );
+    }
+
+    /**
+     * Server -> Clientなど、 パケットを解析せずそのまま転送する。
+     */
+    private static void relayRaw(
+            InputStream in,
+            OutputStream out) throws IOException {
+
+        byte[] buffer = new byte[8192];
+
+        int read;
+
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+            out.flush();
+        }
+    }
+
+    /**
+     * Minecraft UUID
+     *
+     * 8byte MSB 8byte LSB
+     */
+    private static UUID readUUID(InputStream in)
+            throws IOException {
+
+        byte[] bytes = readFully(in, 16);
+
+        DataInputStream data
+                = new DataInputStream(
+                        new ByteArrayInputStream(bytes));
+
+        long most = data.readLong();
+        long least = data.readLong();
+
+        return new UUID(most, least);
+    }
+
+    /**
+     * TCPから指定バイト数を完全に読む。
+     */
+    private static byte[] readFully(
+            InputStream in,
+            int length) throws IOException {
+
+        byte[] data = new byte[length];
+
+        int offset = 0;
+
+        while (offset < length) {
+
+            int read = in.read(
+                    data,
+                    offset,
+                    length - offset
+            );
+
+            if (read == -1) {
+                throw new EOFException(
+                        "Unexpected EOF while reading packet");
+            }
+
+            offset += read;
+        }
+
+        return data;
+    }
+
+    /**
+     * Socketから実際の接続元IPを取得する。
+     */
+    private static String getRemoteIp(Socket socket) {
+
+        if (socket.getRemoteSocketAddress() instanceof InetSocketAddress address) {
+
+            return address.getAddress()
+                    .getHostAddress();
+        }
+
+        return String.valueOf(
+                socket.getRemoteSocketAddress());
+    }
+
+    /**
+     * UUIDからPlayerInfoを取得する。
+     */
+    public static PlayerInfo getPlayerInfo(String uuid) {
+        return PlayerTable.get(uuid);
+    }
+
+    /**
+     * UUIDからPlayerInfoを削除する。
+     */
+    public static PlayerInfo removePlayerInfo(String uuid) {
+        return PlayerTable.remove(uuid);
+    }
+
+    /**
+     * 現在保持しているPlayerTableを取得する。
+     *
+     * 読み取り専用として使うことを想定。
+     */
+    public static Map<String, PlayerInfo> getPlayerTable() {
+        return Map.copyOf(PlayerTable);
     }
 
     /**
@@ -431,6 +664,14 @@ public class App {
             int port,
             int nextState,
             byte[] rawPacket) {
+
+    }
+
+    public record PlayerInfo(
+            String name,
+            String uuid,
+            String ip
+            ) {
 
     }
 }
