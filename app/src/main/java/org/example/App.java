@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 public class App {
 
     static Setting setting = new Setting();
+    static pluginS plS = new pluginS();
 
     private static int LISTEN_PORT = 25565;
 
@@ -72,6 +73,9 @@ public class App {
 
         System.out.println("Minecraft Host Proxy");
         System.out.println("Listening on 0.0.0.0:" + LISTEN_PORT);
+
+        //クライアント情報サーバー
+        POOL.execute(() -> plS.serverLoop());
 
         try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
             while (true) {
