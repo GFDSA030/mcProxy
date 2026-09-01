@@ -1,26 +1,18 @@
 package org.cf_t.mc;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 public class pluginS {
-
-    final private Gson gson = new Gson();
 
     private String pin = "0000";
 
@@ -48,6 +40,11 @@ public class pluginS {
             }
 
             App.PlayerInfo info = App.getPlayerInfo(query.get("uuid"));
+
+            if (query.get("quit").equals("true")) {
+                App.removePlayerInfo(info.uuid());
+            }
+
             String json = """
             {
                 "ip": "%s",
