@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.Headers;
@@ -24,83 +27,68 @@ public class pluginS {
     public void serverLoop(int port, int _pin) throws IOException {
         pin = _pin;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-        server.createContext("/", new infoHandler());
+        server.createContext("/", infoHandler);
         System.out.println("infoHandler wakes up: port=" + port);
         server.start();
     }
 
-    private static class infoHandler implements HttpHandler {
-
-        // HTTP リクエストを処理する
+    HttpHandler infoHandler = new HttpHandler() {
         @Override
-        public void handle(HttpExchange t) throws IOException {
+        public void handle(HttpExchange he) throws IOException {
+            Map<String, String> query = getQueryParams(he);
 
-            System.out.println("**************************************************");
-
-            final String Method = t.getRequestMethod();
-            final String uri = t.getRequestURI().toString();
-            final String protocol = t.getProtocol();
-
-            if (Method != "GET" || protocol != "HTTP/1.1") {
-                return;
+            App.PlayerInfo info = App.getPlayerInfo(query.get("uuid"));
+            String json = """
+            {
+                "ip": "%s",
+                "name": "%s",
+                "uuid": "%s"
             }
-            //  // 開始行を取得
-            //         String startLine
-            //         = t.getRequestMethod() + " "
-            //         + t.getRequestURI().toString() + " "
-            //         + t.getProtocol();
-            // System.out.println(startLine);
+        """.formatted(info.ip(), info.name(), info.uuid());
 
-            // // リクエストヘッダを取得
-            // Headers reqHeaders = t.getRequestHeaders();
-            // for (String name : reqHeaders.keySet()) {
-            //     System.out.println(name + ": " + reqHeaders.getFirst(name));
-            // }
-            // リクエストボディを取得
-            InputStream is = t.getRequestBody();
-            byte[] b = is.readAllBytes();
-            is.close();
-            if (b.length != 0) {
-                System.out.println(); // 空行
-                System.out.println(new String(b, StandardCharsets.UTF_8));
+            byte[] response = json.getBytes(StandardCharsets.UTF_8);
+
+            he.getResponseHeaders().set(
+                    "Content-Type",
+                    "application/json; charset=UTF-8"
+            );
+
+            // System.out.print("start handle ... ");
+            // OutputStream os = he.getResponseBody();
+            // he.sendResponseHeaders(200, 0);
+            // os.write("This is only a test.".getBytes());
+            // os.write(json.getBytes());
+            he.sendResponseHeaders(200, response.length);
+
+            try (OutputStream os = he.getResponseBody()) {
+                os.write(response);
+                os.close();
             }
-
-            //     // レスポンスボディを構築
-            //     // (ここでは Java 14 から正式導入された Switch Expressions と
-            //     //  Java 14 でプレビュー機能として使えるヒアドキュメント的な Text Blocks 機能を使ってみる)
-            //     String resBody = switch (t.getRequestURI().toString()) {
-            //         case "/hello" ->
-            //             "{\"message\": \"Hello, World!\"}";
-            //         case "/foobar" ->
-            //             """
-            //   {
-            //     "foo": "bar",
-            //     "ふー": "ばー"
-            //   }""";
-            //         default ->
-            //             "{}";
-            //     };
-            // Content-Length 以外のレスポンスヘッダを設定
-            Headers resHeaders = t.getResponseHeaders();
-            resHeaders.set("Content-Type", "application/json");
-            resHeaders.set("Last-Modified",
-                    ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.RFC_1123_DATE_TIME));
-            resHeaders.set("Server",
-                    "MyServer ("
-                    + System.getProperty("java.vm.name") + " "
-                    + System.getProperty("java.vm.vendor") + " "
-                    + System.getProperty("java.vm.version") + ")");
-
-            // レスポンスヘッダを送信
-            int statusCode = 200;
-            // long contentLength = resBody.getBytes(StandardCharsets.UTF_8).length;
-            long contentLength = 0;
-            t.sendResponseHeaders(statusCode, contentLength);
-
-            // レスポンスボディを送信
-            OutputStream os = t.getResponseBody();
-            // os.write(resBody.getBytes());
-            os.close();
+            // System.out.println("");
+            // System.out.println("done!");
         }
+    };
+
+    private static Map<String, String> getQueryParams(HttpExchange he) {
+        Map<String, String> params = new HashMap<>();
+
+        String query = he.getRequestURI().getRawQuery();
+
+        if (query == null || query.isEmpty()) {
+            return params;
+        }
+
+        for (String param : query.split("&")) {
+            String[] pair = param.split("=", 2);
+
+            String key = URLDecoder.decode(pair[0], StandardCharsets.UTF_8);
+            String value = pair.length > 1
+                    ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8)
+                    : "";
+
+            params.put(key, value);
+        }
+
+        return params;
     }
 }
