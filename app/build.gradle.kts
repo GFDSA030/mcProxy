@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.guava)
 
     implementation("com.google.code.gson:gson:2.13.1")
+    implementation("org.jline:jline:3.30.6")
 
 }
 
