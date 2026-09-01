@@ -2,6 +2,8 @@
 
 マイクラサーバー用のnginxみたいな感じ
 
+補助プラグイン(paper用)[リンク](https://github.com/GFDSA030/mcProxyPlugin)
+
 ## use
 
 実行ディレクトリに設定ファイルを作る  
