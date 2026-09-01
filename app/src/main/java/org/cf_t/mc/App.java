@@ -357,8 +357,9 @@ public class App {
                 break;
             }
 
-            if (packetLength < 0) {
-                throw new IOException("Invalid packet length: " + packetLength);
+            if (packetLength < 0 || packetLength > 2 * 1024 * 1024) {
+                throw new IOException(
+                        "Invalid packet length: " + packetLength);
             }
 
             /*
@@ -367,9 +368,7 @@ public class App {
             byte[] packetData = packetAnl.readFully(in, packetLength);
 
             /*
-             * 元のパケットをそのまま転送する。
-             *
-             * length + packetData
+             * 元のパケットをそのまま転送
              */
             packetAnl.writeVarInt(out, packetLength);
             out.write(packetData);
@@ -381,17 +380,27 @@ public class App {
             ByteArrayInputStream packetIn
                     = new ByteArrayInputStream(packetData);
 
-            int packetId = packetAnl.readVarInt(packetIn);
+            int packetId
+                    = packetAnl.readVarInt(packetIn);
+
+            System.out.println(
+                    "C->S packet: id=0x"
+                    + Integer.toHexString(packetId)
+                    + " length="
+                    + packetLength);
 
             /*
              * Login Start
              *
-             * Serverbound hello
-             * Packet ID = 0x00
+             * Login状態の最初のPacket ID 0x00
              */
             if (packetId == 0) {
                 try {
-                    parseLoginStart(packetIn, clientSocket);
+
+                    parseLoginStart(
+                            packetIn,
+                            clientSocket);
+
                 } catch (IOException e) {
                     /*
                      * 解析に失敗しても通信自体は止めない。
@@ -402,6 +411,19 @@ public class App {
                             + ": "
                             + e.getMessage());
                 }
+
+                /*
+                 * Login Start以降は解析しない。
+                 *
+                 * Encryption Response以降、
+                 * Client -> Serverは暗号化されるため、
+                 * Minecraftパケットとして解析すると壊れる。
+                 *
+                 * ここから完全なTCPリレーに戻す。
+                 */
+                relayRaw(in, out);
+
+                return;
             }
         }
     }
