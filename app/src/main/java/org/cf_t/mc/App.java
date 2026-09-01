@@ -435,7 +435,7 @@ public class App {
      *
      * Packet ID Name String Player UUID UUID
      */
-    private static void parseLoginStart(
+    private static String parseLoginStart(
             InputStream in,
             Socket clientSocket) throws IOException {
 
@@ -474,6 +474,7 @@ public class App {
                 + " uuid=" + uuid
                 + " ip=" + ip
         );
+        return uuid.toString();
     }
 
     /**
