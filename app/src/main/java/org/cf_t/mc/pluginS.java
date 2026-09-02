@@ -39,10 +39,10 @@ public class pluginS {
                 return;
             }
 
-            App.PlayerInfo info = App.getPlayerInfo(query.get("uuid"));
+            Player.PlayerInfo info = Player.getPlayerInfo(query.get("uuid"));
 
             if (query.get("quit").equals("true")) {
-                App.removePlayerInfo(info.uuid());
+                Player.removePlayerInfo(info.uuid());
             }
 
             String json = """

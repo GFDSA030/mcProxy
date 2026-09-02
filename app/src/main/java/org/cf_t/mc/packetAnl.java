@@ -7,11 +7,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-
-import org.cf_t.mc.App.PlayerInfo;
 
 public class packetAnl {
 
@@ -20,7 +19,7 @@ public class packetAnl {
      *
      * 8byte MSB 8byte LSB
      */
-    public static UUID readUUID(InputStream in)
+    private static UUID readUUID(InputStream in)
             throws IOException {
 
         byte[] bytes = readFully(in, 16);
@@ -183,17 +182,17 @@ public class packetAnl {
         /*
          * 接続元IP
          */
-        String ip = App.getRemoteIp(clientSocket);
+        String ip = getRemoteIp(clientSocket);
 
         /*
          * UUIDをキーとして保存
          */
-        PlayerInfo info = new PlayerInfo(
+        Player.PlayerInfo info = new Player.PlayerInfo(
                 name,
                 uuid.toString(),
                 ip);
 
-        App.PlayerTable.put(uuid.toString(), info);
+        Player.PlayerTable.put(uuid.toString(), info);
 
         System.out.println(
                 "Login Start:"
@@ -206,7 +205,7 @@ public class packetAnl {
     /**
      * Minecraft Handshakeを読み取る。
      */
-    public static App.Handshake readHandshake(
+    public static Handshake readHandshake(
             InputStream in) throws IOException {
 
         /*
@@ -275,7 +274,7 @@ public class packetAnl {
          */
         byte[] rawPacket = buildRawPacket(packetData);
 
-        return new App.Handshake(
+        return new Handshake(
                 protocolVersion,
                 host,
                 port,
@@ -286,7 +285,7 @@ public class packetAnl {
     /**
      * Packet Length + Packet Dataを再構築。
      */
-    public static byte[] buildRawPacket(
+    private static byte[] buildRawPacket(
             byte[] packetData) throws IOException {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -298,4 +297,27 @@ public class packetAnl {
         return out.toByteArray();
     }
 
+    /**
+     * Socketから実際の接続元IPを取得する。
+     */
+    private static String getRemoteIp(Socket socket) {
+
+        if (socket.getRemoteSocketAddress() instanceof InetSocketAddress address) {
+
+            return address.getAddress()
+                    .getHostAddress();
+        }
+
+        return String.valueOf(
+                socket.getRemoteSocketAddress());
+    }
+
+    public record Handshake(
+            int protocolVersion,
+            String host,
+            int port,
+            int nextState,
+            byte[] rawPacket) {
+
+    }
 }

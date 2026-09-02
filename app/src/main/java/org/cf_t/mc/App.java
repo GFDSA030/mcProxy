@@ -1,10 +1,6 @@
 package org.cf_t.mc;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -14,8 +10,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,7 +31,6 @@ public class App {
      * creative.example.com → 127.0.0.1:25568
      */
     private static final Map<String, Backend> ROUTES = new HashMap<>();
-    public static final Map<String, PlayerInfo> PlayerTable = new ConcurrentHashMap<>();
 
     private static final ExecutorService POOL = Executors.newCachedThreadPool();
 
@@ -110,23 +103,23 @@ public class App {
              *
              * ここではまだBackendには接続しない。
              */
-            Handshake handshake = packetAnl.readHandshake(client.getInputStream());
+            packetAnl.Handshake handshake = packetAnl.readHandshake(client.getInputStream());
 
             System.out.println(
-                    "Handshake: host=" + handshake.host
-                            + ", port=" + handshake.port
-                            + ", protocol=" + handshake.protocolVersion
-                            + ", nextState=" + handshake.nextState);
+                    "Handshake: host=" + handshake.host()
+                            + ", port=" + handshake.port()
+                            + ", protocol=" + handshake.protocolVersion()
+                            + ", nextState=" + handshake.nextState());
 
             /*
              * ホスト名でルーティング。
              */
             Backend backend = ROUTES.get(
-                    handshake.host.toLowerCase(Locale.ROOT));
+                    handshake.host().toLowerCase(Locale.ROOT));
 
             if (backend == null) {
                 System.out.println(
-                        "Unknown host: " + handshake.host);
+                        "Unknown host: " + handshake.host());
 
                 closeQuietly(client);
                 return;
@@ -134,7 +127,7 @@ public class App {
 
             System.out.println(
                     "Routing "
-                            + handshake.host
+                            + handshake.host()
                             + " -> "
                             + backend.host
                             + ":"
@@ -163,7 +156,7 @@ public class App {
              */
             OutputStream serverOut = server.getOutputStream();
 
-            serverOut.write(handshake.rawPacket);
+            serverOut.write(handshake.rawPacket());
             serverOut.flush();
 
             /*
@@ -192,44 +185,6 @@ public class App {
         }
     }
 
-    /**
-     * Socketから実際の接続元IPを取得する。
-     */
-    public static String getRemoteIp(Socket socket) {
-
-        if (socket.getRemoteSocketAddress() instanceof InetSocketAddress address) {
-
-            return address.getAddress()
-                    .getHostAddress();
-        }
-
-        return String.valueOf(
-                socket.getRemoteSocketAddress());
-    }
-
-    /**
-     * UUIDからPlayerInfoを取得する。
-     */
-    public static PlayerInfo getPlayerInfo(String uuid) {
-        return PlayerTable.get(uuid);
-    }
-
-    /**
-     * UUIDからPlayerInfoを削除する。
-     */
-    public static PlayerInfo removePlayerInfo(String uuid) {
-        return PlayerTable.remove(uuid);
-    }
-
-    /**
-     * 現在保持しているPlayerTableを取得する。
-     *
-     * 読み取り専用として使うことを想定。
-     */
-    public static Map<String, PlayerInfo> getPlayerTable() {
-        return Map.copyOf(PlayerTable);
-    }
-
     private static void closeQuietly(
             Socket socket) {
         try {
@@ -244,19 +199,4 @@ public class App {
 
     }
 
-    public record Handshake(
-            int protocolVersion,
-            String host,
-            int port,
-            int nextState,
-            byte[] rawPacket) {
-
-    }
-
-    public record PlayerInfo(
-            String name,
-            String uuid,
-            String ip) {
-
-    }
 }
