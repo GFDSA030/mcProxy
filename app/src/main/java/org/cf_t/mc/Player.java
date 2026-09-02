@@ -19,41 +19,60 @@ public class Player {
 
     public static void load() {
         try {
-            String json;
-            json = Files.readString(Path.of("ban.json"));
-            PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
-            for (int i = 0; i < banList.length; i++) {
-                if (banList[i].ip() != "")
-                    bannedIP.add(banList[i].ip());
-                if (banList[i].name() != "")
+            do {
+                if (!Files.exists(Path.of("banP.json")))
+                    break;
+
+                String json;
+                json = Files.readString(Path.of("banP.json"));
+                PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
+                for (int i = 0; i < banList.length; i++) {
                     bannedPlayer.add(banList[i].name());
-            }
+                }
+            } while (false);
+            do {
+                if (!Files.exists(Path.of("banI.json")))
+                    break;
+
+                String json;
+                json = Files.readString(Path.of("banI.json"));
+                PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
+                for (int i = 0; i < banList.length; i++) {
+                    bannedIP.add(banList[i].name());
+                }
+            } while (false);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void banPlayer(String name) {
-
+        bannedPlayer.add(name);
     }
 
     public static void banIP(String ip) {
-
+        bannedIP.add(ip);
     }
 
     public static void deBanPlayer(String name) {
-
+        bannedPlayer.remove(bannedPlayer.indexOf(name));
     }
 
     public static void deBanIP(String ip) {
-
+        bannedIP.remove(bannedIP.indexOf(ip));
     }
 
     public static boolean checkPlayer(String name) {
+        if (bannedPlayer.contains(name)) {
+            return true;
+        }
         return false;
     }
 
     public static boolean checkIP(String ip) {
+        if (bannedIP.contains(ip)) {
+            return true;
+        }
         return false;
     }
 
