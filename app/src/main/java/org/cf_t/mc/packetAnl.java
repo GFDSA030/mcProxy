@@ -1,13 +1,17 @@
 package org.cf_t.mc;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+
+import org.cf_t.mc.App.PlayerInfo;
 
 public class packetAnl {
 
@@ -21,9 +25,8 @@ public class packetAnl {
 
         byte[] bytes = readFully(in, 16);
 
-        DataInputStream data
-                = new DataInputStream(
-                        new ByteArrayInputStream(bytes));
+        DataInputStream data = new DataInputStream(
+                new ByteArrayInputStream(bytes));
 
         long most = data.readLong();
         long least = data.readLong();
@@ -47,8 +50,7 @@ public class packetAnl {
             int read = in.read(
                     data,
                     offset,
-                    length - offset
-            );
+                    length - offset);
 
             if (read == -1) {
                 throw new EOFException(
@@ -153,4 +155,147 @@ public class packetAnl {
 
         return (high << 8) | low;
     }
+
+    /**
+     * Login Startを解析する。
+     *
+     * Login Start:
+     *
+     * Packet ID Name String Player UUID UUID
+     */
+    public static String parseLoginStart(
+            InputStream in,
+            Socket clientSocket) throws IOException {
+
+        /*
+         * Name
+         */
+        String name = packetAnl.readString(in);
+
+        /*
+         * UUID
+         *
+         * Minecraft ProtocolではUUIDは16byte。
+         * Java UUIDのmost/least significant bitsとして読む。
+         */
+        UUID uuid = packetAnl.readUUID(in);
+
+        /*
+         * 接続元IP
+         */
+        String ip = App.getRemoteIp(clientSocket);
+
+        /*
+         * UUIDをキーとして保存
+         */
+        PlayerInfo info = new PlayerInfo(
+                name,
+                uuid.toString(),
+                ip);
+
+        App.PlayerTable.put(uuid.toString(), info);
+
+        System.out.println(
+                "Login Start:"
+                        + " name=" + name
+                        + " uuid=" + uuid
+                        + " ip=" + ip);
+        return uuid.toString();
+    }
+
+    /**
+     * Minecraft Handshakeを読み取る。
+     */
+    public static App.Handshake readHandshake(
+            InputStream in) throws IOException {
+
+        /*
+         * Packet Length
+         */
+        int packetLength = packetAnl.readVarInt(in);
+
+        if (packetLength <= 0 || packetLength > 1024) {
+            throw new IOException(
+                    "Invalid packet length: " + packetLength);
+        }
+
+        /*
+         * Packet ID + Packet Data
+         */
+        byte[] packetData = in.readNBytes(packetLength);
+
+        if (packetData.length != packetLength) {
+            throw new EOFException(
+                    "Incomplete handshake packet");
+        }
+
+        ByteArrayInputStream packet = new ByteArrayInputStream(packetData);
+
+        /*
+         * Packet ID
+         */
+        int packetId = packetAnl.readVarInt(packet);
+
+        /*
+         * Handshake Packet IDは0x00
+         */
+        if (packetId != 0x00) {
+            throw new IOException(
+                    "First packet is not Handshake: 0x"
+                            + Integer.toHexString(packetId));
+        }
+
+        /*
+         * Protocol Version
+         */
+        int protocolVersion = packetAnl.readVarInt(packet);
+
+        /*
+         * Server Address
+         */
+        String host = packetAnl.readString(packet);
+
+        /*
+         * Server Port
+         */
+        int port = packetAnl.readUnsignedShort(packet);
+
+        /*
+         * Next State
+         *
+         * 1 = Status
+         * 2 = Login
+         */
+        int nextState = packetAnl.readVarInt(packet);
+
+        /*
+         * Backendへ送る元のパケットを再構築。
+         *
+         * Packet Lengthも含める。
+         */
+        byte[] rawPacket = buildRawPacket(packetData);
+
+        return new App.Handshake(
+                protocolVersion,
+                host,
+                port,
+                nextState,
+                rawPacket);
+    }
+
+    /**
+     * Packet Length + Packet Dataを再構築。
+     */
+    public static byte[] buildRawPacket(
+            byte[] packetData) throws IOException {
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        packetAnl.writeVarInt(out, packetData.length);
+
+        out.write(packetData);
+
+        return out.toByteArray();
+    }
+
 }
