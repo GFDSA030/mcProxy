@@ -25,9 +25,9 @@ public class Player {
 
                 String json;
                 json = Files.readString(Path.of("banP.json"));
-                PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
+                String[] banList = gson.fromJson(json, String[].class);
                 for (int i = 0; i < banList.length; i++) {
-                    bannedPlayer.add(banList[i].name());
+                    bannedPlayer.add(banList[i]);
                 }
             } while (false);
             do {
@@ -36,9 +36,9 @@ public class Player {
 
                 String json;
                 json = Files.readString(Path.of("banI.json"));
-                PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
+                String[] banList = gson.fromJson(json, String[].class);
                 for (int i = 0; i < banList.length; i++) {
-                    bannedIP.add(banList[i].name());
+                    bannedIP.add(banList[i]);
                 }
             } while (false);
         } catch (IOException e) {
@@ -47,39 +47,47 @@ public class Player {
     }
 
     public static void banPlayer(String name) {
+        bannedPlayer.add(name);
         try {
             Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        bannedPlayer.add(name);
     }
 
     public static void banIP(String ip) {
+        bannedIP.add(ip);
         try {
             Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        bannedIP.add(ip);
     }
 
     public static void deBanPlayer(String name) {
+        bannedPlayer.remove(bannedPlayer.indexOf(name));
         try {
             Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        bannedPlayer.remove(bannedPlayer.indexOf(name));
     }
 
     public static void deBanIP(String ip) {
+        bannedIP.remove(bannedIP.indexOf(ip));
         try {
             Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        bannedIP.remove(bannedIP.indexOf(ip));
+    }
+
+    public static ArrayList<String> getBanPlayer() {
+        return bannedPlayer;
+    }
+
+    public static ArrayList<String> getBanIP() {
+        return bannedIP;
     }
 
     public static boolean checkPlayer(String name) {

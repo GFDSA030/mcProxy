@@ -42,11 +42,13 @@ public class App {
      * 
      */
     public static void main(String[] args) throws IOException {
+        System.out.println(Player.getBanPlayer());
+        System.out.println(Player.getBanIP());
         /*
          * 設定ロード
          */
         try {
-            if (Files.exists(Path.of("setting.json"))) {
+            if (!Files.exists(Path.of("setting.json"))) {
                 System.out.println("setting.json not found");
             }
             Setting.Config config = Setting.load("setting.json");
