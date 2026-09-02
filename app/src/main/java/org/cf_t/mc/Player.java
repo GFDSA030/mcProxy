@@ -1,5 +1,8 @@
 package org.cf_t.mc;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,11 +14,23 @@ public class Player {
     final static private Gson gson = new Gson();
 
     public static final Map<String, PlayerInfo> PlayerTable = new ConcurrentHashMap<>();
-    public static ArrayList<String> bannedPlayer = new ArrayList<>();
-    public static ArrayList<String> bannedIP = new ArrayList<>();
+    private static ArrayList<String> bannedPlayer = new ArrayList<>();
+    private static ArrayList<String> bannedIP = new ArrayList<>();
 
     public static void load() {
-
+        try {
+            String json;
+            json = Files.readString(Path.of("ban.json"));
+            PlayerInfo[] banList = gson.fromJson(json, PlayerInfo[].class);
+            for (int i = 0; i < banList.length; i++) {
+                if (banList[i].ip() != "")
+                    bannedIP.add(banList[i].ip());
+                if (banList[i].name() != "")
+                    bannedPlayer.add(banList[i].name());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void banPlayer(String name) {
@@ -71,4 +86,5 @@ public class Player {
             String ip) {
 
     }
+
 }

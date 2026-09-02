@@ -14,9 +14,9 @@ import com.sun.net.httpserver.HttpServer;
 
 public class pluginS {
 
-    private String pin = "0000";
+    private static String pin = "0000";
 
-    public void serverLoop(int port, String _pin) throws IOException {
+    public static void serverLoop(int port, String _pin) throws IOException {
         pin = _pin;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", infoHandler);
@@ -24,7 +24,7 @@ public class pluginS {
         server.start();
     }
 
-    HttpHandler infoHandler = new HttpHandler() {
+    static HttpHandler infoHandler = new HttpHandler() {
         @Override
         public void handle(HttpExchange he) throws IOException {
             Map<String, String> query = getQueryParams(he);
@@ -46,19 +46,18 @@ public class pluginS {
             }
 
             String json = """
-            {
-                "ip": "%s",
-                "name": "%s",
-                "uuid": "%s"
-            }
-        """.formatted(info.ip(), info.name(), info.uuid());
+                        {
+                            "ip": "%s",
+                            "name": "%s",
+                            "uuid": "%s"
+                        }
+                    """.formatted(info.ip(), info.name(), info.uuid());
 
             byte[] response = json.getBytes(StandardCharsets.UTF_8);
 
             he.getResponseHeaders().set(
                     "Content-Type",
-                    "application/json; charset=UTF-8"
-            );
+                    "application/json; charset=UTF-8");
 
             he.sendResponseHeaders(200, response.length);
 

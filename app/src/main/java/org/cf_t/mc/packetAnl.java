@@ -96,24 +96,6 @@ public class packetAnl {
     }
 
     /**
-     * Minecraft VarIntを書く。
-     */
-    public static void writeVarInt(
-            OutputStream out,
-            int value) throws IOException {
-
-        while ((value & 0xFFFFFF80) != 0) {
-
-            out.write(
-                    (value & 0x7F) | 0x80);
-
-            value >>>= 7;
-        }
-
-        out.write(value & 0x7F);
-    }
-
-    /**
      * Minecraft Stringを読む。
      */
     public static String readString(
@@ -153,53 +135,6 @@ public class packetAnl {
         }
 
         return (high << 8) | low;
-    }
-
-    /**
-     * Login Startを解析する。
-     *
-     * Login Start:
-     *
-     * Packet ID Name String Player UUID UUID
-     */
-    public static String parseLoginStart(
-            InputStream in,
-            Socket clientSocket) throws IOException {
-
-        /*
-         * Name
-         */
-        String name = packetAnl.readString(in);
-
-        /*
-         * UUID
-         *
-         * Minecraft ProtocolではUUIDは16byte。
-         * Java UUIDのmost/least significant bitsとして読む。
-         */
-        UUID uuid = packetAnl.readUUID(in);
-
-        /*
-         * 接続元IP
-         */
-        String ip = getRemoteIp(clientSocket);
-
-        /*
-         * UUIDをキーとして保存
-         */
-        Player.PlayerInfo info = new Player.PlayerInfo(
-                name,
-                uuid.toString(),
-                ip);
-
-        Player.PlayerTable.put(uuid.toString(), info);
-
-        System.out.println(
-                "Login Start:"
-                        + " name=" + name
-                        + " uuid=" + uuid
-                        + " ip=" + ip);
-        return uuid.toString();
     }
 
     /**
@@ -280,6 +215,71 @@ public class packetAnl {
                 port,
                 nextState,
                 rawPacket);
+    }
+
+    /**
+     * Minecraft VarIntを書く。
+     */
+    public static void writeVarInt(
+            OutputStream out,
+            int value) throws IOException {
+
+        while ((value & 0xFFFFFF80) != 0) {
+
+            out.write(
+                    (value & 0x7F) | 0x80);
+
+            value >>>= 7;
+        }
+
+        out.write(value & 0x7F);
+    }
+
+    /**
+     * Login Startを解析する。
+     *
+     * Login Start:
+     *
+     * Packet ID Name String Player UUID UUID
+     */
+    public static String parseLoginStart(
+            InputStream in,
+            Socket clientSocket) throws IOException {
+
+        /*
+         * Name
+         */
+        String name = packetAnl.readString(in);
+
+        /*
+         * UUID
+         *
+         * Minecraft ProtocolではUUIDは16byte。
+         * Java UUIDのmost/least significant bitsとして読む。
+         */
+        UUID uuid = packetAnl.readUUID(in);
+
+        /*
+         * 接続元IP
+         */
+        String ip = getRemoteIp(clientSocket);
+
+        /*
+         * UUIDをキーとして保存
+         */
+        Player.PlayerInfo info = new Player.PlayerInfo(
+                name,
+                uuid.toString(),
+                ip);
+
+        Player.PlayerTable.put(uuid.toString(), info);
+
+        System.out.println(
+                "Login Start:"
+                        + " name=" + name
+                        + " uuid=" + uuid
+                        + " ip=" + ip);
+        return uuid.toString();
     }
 
     /**

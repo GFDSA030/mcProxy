@@ -15,8 +15,8 @@ import java.util.concurrent.Executors;
 
 public class App {
 
-    static Setting setting = new Setting();
-    static pluginS plS = new pluginS();
+    // static Setting setting = new Setting();
+    // static pluginS plS = new pluginS();
 
     private static int LISTEN_PORT = 25565;
     private static int infoLISTEN_PORT = 28080;
@@ -49,7 +49,7 @@ public class App {
             if (Files.exists(Path.of("setting.json"))) {
                 System.out.println("setting.json not found");
             }
-            Setting.Config config = setting.load("setting.json");
+            Setting.Config config = Setting.load("setting.json");
 
             System.out.println(config.serverPort());
             LISTEN_PORT = config.serverPort();
@@ -75,7 +75,7 @@ public class App {
         // クライアント情報サーバー
         POOL.execute(() -> {
             try {
-                plS.serverLoop(infoLISTEN_PORT, infoPIN);
+                pluginS.serverLoop(infoLISTEN_PORT, infoPIN);
             } catch (IOException ex) {
                 System.getLogger(App.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }

@@ -8,13 +8,12 @@ import com.google.gson.Gson;
 
 public class Setting {
 
-    final private Gson gson = new Gson();
+    final private static Gson gson = new Gson();
 
     public record SvConfig(
             String host,
             String remoteHost,
-            int port
-            ) {
+            int port) {
 
     }
 
@@ -27,7 +26,7 @@ public class Setting {
 
     }
 
-    public Config load(String path) throws IOException {
+    public static Config load(String path) throws IOException {
         String json = Files.readString(Path.of(path));
         Config config = gson.fromJson(json, Config.class);
         return config;
