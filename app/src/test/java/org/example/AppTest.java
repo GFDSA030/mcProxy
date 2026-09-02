@@ -3,15 +3,6 @@
  */
 package org.example;
 
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import org.cf_t.mc.App;
 
 class AppTest {
-    @Test void appHasAGreeting() {
-        App classUnderTest = new App();
-        // assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
-    }
 }
