@@ -47,18 +47,38 @@ public class Player {
     }
 
     public static void banPlayer(String name) {
+        try {
+            Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         bannedPlayer.add(name);
     }
 
     public static void banIP(String ip) {
+        try {
+            Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         bannedIP.add(ip);
     }
 
     public static void deBanPlayer(String name) {
+        try {
+            Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         bannedPlayer.remove(bannedPlayer.indexOf(name));
     }
 
     public static void deBanIP(String ip) {
+        try {
+            Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         bannedIP.remove(bannedIP.indexOf(ip));
     }
 
