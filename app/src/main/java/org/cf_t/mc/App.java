@@ -87,7 +87,9 @@ public class App {
         try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
             while (true) {
                 Socket client = serverSocket.accept();
-                String IPstr = client.getInetAddress().toString();
+                String rawAddr = client.getRemoteSocketAddress().toString();
+                String IPstr = rawAddr.substring(1, rawAddr.lastIndexOf(':'));
+                // System.out.println("client addr:" + IPstr);
                 if (Player.checkIP(IPstr)) {
                     closeQuietly(client);
                     System.out.println("banned ip connect: " + IPstr);
