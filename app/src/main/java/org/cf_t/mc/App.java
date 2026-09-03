@@ -42,6 +42,7 @@ public class App {
      * 
      */
     public static void main(String[] args) throws IOException {
+        Player.load();
         System.out.println(Player.getBanPlayer());
         System.out.println(Player.getBanIP());
         /*
@@ -86,7 +87,12 @@ public class App {
         try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
             while (true) {
                 Socket client = serverSocket.accept();
-
+                String IPstr = client.getInetAddress().toString();
+                if (Player.checkIP(IPstr)) {
+                    closeQuietly(client);
+                    System.out.println("banned ip connect: " + IPstr);
+                    continue;
+                }
                 client.setTcpNoDelay(true);
 
                 System.out.println(
