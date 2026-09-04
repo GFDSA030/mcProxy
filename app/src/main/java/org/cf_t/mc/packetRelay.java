@@ -133,9 +133,14 @@ public class packetRelay {
             if (packetId == 0) {
                 try {
 
-                    packetAnl.parseLoginStart(
+                    String uuid = packetAnl.parseLoginStart(
                             packetIn,
                             clientSocket);
+
+                    if (Player.checkUUID(uuid)) {
+                        System.out.println("banned player connect:" + Player.getPlayerInfo(uuid).name());
+                        break;
+                    }
 
                 } catch (IOException e) {
                     /*

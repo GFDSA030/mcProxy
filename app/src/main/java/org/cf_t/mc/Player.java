@@ -104,6 +104,13 @@ public class Player {
         return false;
     }
 
+    public static boolean checkUUID(String uuid) {
+        if (checkPlayer(getPlayerInfo(uuid).name()) || checkIP(getPlayerInfo(uuid).ip())) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * UUIDからPlayerInfoを取得する。
      */
