@@ -14,10 +14,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class App {
+import com.mojang.brigadier.arguments.StringArgumentType;
 
-    // static Setting setting = new Setting();
-    // static pluginS plS = new pluginS();
+public class App {
 
     private static int LISTEN_PORT = 25565;
     private static int infoLISTEN_PORT = 28080;
@@ -79,7 +78,9 @@ public class App {
         Command.out("Minecraft Host Proxy");
         Command.out("Listening on 0.0.0.0:" + LISTEN_PORT);
 
-        // クライアント情報サーバー
+        /*
+         * クライアント管理サーバー
+         */
         POOL.execute(() -> {
             try {
                 pluginS.serverLoop(infoLISTEN_PORT, infoPIN);
@@ -88,6 +89,9 @@ public class App {
             }
         });
 
+        /*
+         * リレースレッド
+         */
         POOL.execute(() -> {
             try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
                 while (continueT) {
@@ -113,6 +117,9 @@ public class App {
             }
         });
 
+        /*
+         * コマンド登録
+         */
         registerCommands();
 
         // Command loop
@@ -137,6 +144,9 @@ public class App {
     }
 
     private static void registerCommands() {
+        /*
+         * help系
+         */
         Command.register(Commands.literal("help").executes(c -> {
             Command.out("Help!");
             return 1;
@@ -144,16 +154,42 @@ public class App {
             Command.out("Help me!");
             return 1;
         })));
-
+        /*
+         * List系
+         */
+        Command.register(Commands.literal("list").executes(c -> {
+            Command.out(Player.getPlayerTable());
+            return 1;
+        }).then(Commands.literal("ipBan").executes(c -> {
+            Command.out(Player.getBanIP());
+            return 1;
+        })).then(Commands.literal("nameBan").executes(c -> {
+            Command.out(Player.getBanPlayer());
+            return 1;
+        })));
+        /*
+         * ban
+         */
+        Command.register(Commands.literal("ban")
+                .then(Commands.literal("ip").then(Commands.argument("addr", StringArgumentType.word()).executes(c -> {
+                    String addr = StringArgumentType.getString(c, "addr");
+                    Command.out("ban: " + addr);
+                    Player.banIP(addr);
+                    return 1;
+                })))
+                .then(Commands.literal("name").then(Commands.argument("name", StringArgumentType.word()).executes(c -> {
+                    String name = StringArgumentType.getString(c, "name");
+                    Command.out("ban: " + name);
+                    Player.banPlayer(name);
+                    return 1;
+                }))));
+        /*
+         * pardon
+         */
     }
 
     private static void handleClient(Socket client) {
         try {
-            /*
-             * まずMinecraft Handshakeだけ読む。
-             *
-             * ここではまだBackendには接続しない。
-             */
             packetAnl.Handshake handshake = packetAnl.readHandshake(client.getInputStream());
 
             Command.out(
@@ -163,7 +199,7 @@ public class App {
                             + ", nextState=" + handshake.nextState());
 
             /*
-             * ホスト名でルーティング。
+             * ホスト名ルーティング
              */
             Backend backend = ROUTES.get(
                     handshake.host().toLowerCase(Locale.ROOT));
@@ -198,12 +234,7 @@ public class App {
                     5000);
 
             /*
-             * ここが重要。
-             *
-             * Handshakeを読んだ時点で、TCPストリームから
-             * Handshakeのバイト列は消費されている。
-             *
-             * BackendにはHandshakeを再構築して送る必要がある。
+             * ハンドシェイク再構築
              */
             OutputStream serverOut = server.getOutputStream();
 
@@ -211,9 +242,7 @@ public class App {
             serverOut.flush();
 
             /*
-             * 以降は単純なTCPリレー。
-             *
-             * Client → Server
+             * Client -> Server
              */
             POOL.execute(() -> packetRelay.relay(
                     client,
@@ -221,7 +250,7 @@ public class App {
                     false));
 
             /*
-             * Server → Client
+             * Server -> Client
              */
             POOL.execute(() -> packetRelay.relay(
                     server,
