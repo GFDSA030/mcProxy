@@ -115,28 +115,37 @@ public class App {
             }
         });
 
-        Command.addPathComp("help");
-        Command.addPathComp("exit");
-        Command.addPathComp("reload");
+        registerCommands();
+
         // Command loop
         while (continueT) {
             String c = Command.in();
+            if (c == null)
+                break;
+            if (c.isBlank())
+                continue;
             c = c.trim();
             if (c.equals("exit")) {
                 Command.out("shutdown");
                 POOL.shutdownNow();
+                Command.close();
                 System.exit(0);
                 break;
             }
-            if (c.equals("h") || c.equals("help")) {
-                continue;
-            }
-            if (c.equals("reload")) {
-                continue;
-            }
-
-            Command.out("unknown command: " + c);
+            Command.execute(c);
         }
+        Command.close();
+
+    }
+
+    private static void registerCommands() {
+        Command.register(Commands.literal("help").executes(c -> {
+            Command.out("Help!");
+            return 1;
+        }).then(Commands.literal("me").executes(c -> {
+            Command.out("Help me!");
+            return 1;
+        })));
 
     }
 
