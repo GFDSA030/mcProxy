@@ -42,6 +42,13 @@ public class App {
      * 
      */
     public static void main(String[] args) throws IOException {
+        Command.init();
+        Boolean cont = true;
+        while (cont) {
+            String com = Command.in();
+            Command.out(com);
+        }
+
         Player.load();
         System.out.println(Player.getBanPlayer());
         System.out.println(Player.getBanIP());
