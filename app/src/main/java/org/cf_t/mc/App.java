@@ -35,7 +35,7 @@ public class App {
      */
     private static final Map<String, Backend> ROUTES = new HashMap<>();
 
-    private static final ExecutorService POOL = Executors.newCachedThreadPool();
+    public static final ExecutorService POOL = Executors.newCachedThreadPool();
 
     /*
      * TODO:
@@ -115,16 +115,27 @@ public class App {
             }
         });
 
+        Command.addPathComp("help");
+        Command.addPathComp("exit");
+        Command.addPathComp("reload");
         // Command loop
         while (continueT) {
             String c = Command.in();
+            c = c.trim();
             if (c.equals("exit")) {
                 Command.out("shutdown");
                 POOL.shutdownNow();
                 System.exit(0);
                 break;
             }
-            Command.out(c);
+            if (c.equals("h") || c.equals("help")) {
+                continue;
+            }
+            if (c.equals("reload")) {
+                continue;
+            }
+
+            Command.out("unknown command: " + c);
         }
 
     }
