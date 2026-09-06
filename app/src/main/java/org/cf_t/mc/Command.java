@@ -16,8 +16,7 @@ public class Command {
 
     private static Terminal terminal;
     private static LineReader reader;
-    // private static List<String> commands = List.of("");
-     private static   ArrayList<String> commands = new ArrayList<>();
+    private static ArrayList<String> commands = new ArrayList<>();
 
     public static void init() throws IOException {
         terminal = TerminalBuilder.builder()

@@ -27,6 +27,7 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.13.1")
     implementation("org.jline:jline:3.30.6")
+    implementation("com.mojang:brigadier:1.0.18")
 
 }
 
