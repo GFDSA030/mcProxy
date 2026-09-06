@@ -32,3 +32,4 @@ jobs:
           name: Build ${{ github.run_number }}
           files: app/build/libs/*.jar
           generate_release_notes: true
+          make_latest: true
