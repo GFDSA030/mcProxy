@@ -23,6 +23,8 @@ public class App {
     private static int infoLISTEN_PORT = 28080;
     private static String infoPIN = "0000";
 
+    public static boolean continueT = true;
+
     /*
      * Minecraftのホスト名 → 転送先
      *
@@ -89,7 +91,7 @@ public class App {
 
         POOL.execute(() -> {
             try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
-                while (true) {
+                while (continueT) {
                     Socket client = serverSocket.accept();
                     String rawAddr = client.getRemoteSocketAddress().toString();
                     String IPstr = rawAddr.substring(1, rawAddr.lastIndexOf(':'));
@@ -114,15 +116,17 @@ public class App {
         });
 
         // Command loop
-        while (true) {
+        while (continueT) {
             String c = Command.in();
-            if (c == "exit") {
-                Command.out("system will exit");
+            if (c.equals("exit")) {
+                Command.out("shutdown");
                 POOL.shutdownNow();
                 System.exit(0);
                 break;
             }
+            Command.out(c);
         }
+
     }
 
     private static void handleClient(Socket client) {

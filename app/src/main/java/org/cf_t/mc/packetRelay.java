@@ -82,7 +82,7 @@ public class packetRelay {
             OutputStream out,
             Socket clientSocket) throws IOException {
 
-        while (true) {
+        while (App.continueT) {
 
             /*
              * Packet Length
