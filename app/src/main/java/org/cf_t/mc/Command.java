@@ -8,7 +8,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+// import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import org.jline.reader.Candidate;
@@ -43,9 +43,9 @@ public class Command {
                 String input = line.line();
                 int cursor = line.cursor();
 
-                SuggestionsBuilder builder = new SuggestionsBuilder(
-                        input,
-                        cursor);
+                // SuggestionsBuilder builder = new SuggestionsBuilder(
+                //         input,
+                //         cursor);
 
                 ParseResults<Object> parse = dispatcher.parse(
                         input,

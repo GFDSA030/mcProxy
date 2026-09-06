@@ -38,8 +38,7 @@ public class App {
     public static final ExecutorService POOL = Executors.newCachedThreadPool();
 
     /*
-     * TODO:
-     * コマンド入力欄とログエリアの分離
+     * TODO
      * 複数ポートのサポート
      */
     public static void main(String[] args) throws IOException {
@@ -110,7 +109,6 @@ public class App {
                     POOL.execute(() -> handleClient(client));
                 }
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         });
