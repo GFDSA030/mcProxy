@@ -274,7 +274,7 @@ public class packetAnl {
 
         Player.PlayerTable.put(uuid.toString(), info);
 
-        System.out.println(
+        Command.out(
                 "Login Start:"
                         + " name=" + name
                         + " uuid=" + uuid

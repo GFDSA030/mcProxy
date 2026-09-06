@@ -62,7 +62,7 @@ public class packetRelay {
             }
 
         } catch (IOException e) {
-            System.out.println(
+            Command.out(
                     "Relay error: "
                             + from.getRemoteSocketAddress()
                             + " -> "
@@ -119,7 +119,7 @@ public class packetRelay {
 
             int packetId = packetAnl.readVarInt(packetIn);
 
-            System.out.println(
+            Command.out(
                     "C->S packet: id=0x"
                             + Integer.toHexString(packetId)
                             + " length="
@@ -138,7 +138,7 @@ public class packetRelay {
                             clientSocket);
 
                     if (Player.checkUUID(uuid)) {
-                        System.out.println("banned player connect:" + Player.getPlayerInfo(uuid).name());
+                        Command.out("banned player connect:" + Player.getPlayerInfo(uuid).name());
                         break;
                     }
 
@@ -146,7 +146,7 @@ public class packetRelay {
                     /*
                      * 解析に失敗しても通信自体は止めない。
                      */
-                    System.out.println(
+                    Command.out(
                             "Failed to parse Login Start from "
                                     + clientSocket.getRemoteSocketAddress()
                                     + ": "

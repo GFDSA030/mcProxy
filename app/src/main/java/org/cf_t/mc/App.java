@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -37,50 +38,45 @@ public class App {
     /*
      * TODO:
      * コマンド入力欄とログエリアの分離
-     * 設定のリロード
      * 複数ポートのサポート
-     * 
      */
     public static void main(String[] args) throws IOException {
         Command.init();
-        Boolean cont = true;
-        while (cont) {
-            String com = Command.in();
-            Command.out(com);
-        }
+
+        Command.out(LocalDateTime.now());
 
         Player.load();
-        System.out.println(Player.getBanPlayer());
-        System.out.println(Player.getBanIP());
+        Command.out(Player.getBanPlayer());
+        Command.out(Player.getBanIP());
         /*
          * 設定ロード
          */
         try {
             if (!Files.exists(Path.of("setting.json"))) {
-                System.out.println("setting.json not found");
+                Command.out("setting.json not found");
             }
             Setting.Config config = Setting.load("setting.json");
 
-            System.out.println(config.serverPort());
+            Command.out(config.serverPort());
             LISTEN_PORT = config.serverPort();
             infoLISTEN_PORT = config.infoPort();
             infoPIN = config.pin();
 
             for (Setting.SvConfig server : config.routings()) {
-                System.out.println(server.host());
-                System.out.println(server.remoteHost());
-                System.out.println(server.port());
+                Command.out(server.host());
+                Command.out(server.remoteHost());
+                Command.out(server.port());
                 ROUTES.put(
                         server.host(),
                         new Backend(server.remoteHost(), server.port()));
             }
         } catch (IOException e) {
-            System.out.println("error with ioException");
+            Command.out("error with ioException");
             return;
         }
 
-        System.out.println("Minecraft Host Proxy");
-        System.out.println("Listening on 0.0.0.0:" + LISTEN_PORT);
+        Command.out("Minecraft Host Proxy");
+        Command.out("Listening on 0.0.0.0:" + LISTEN_PORT);
 
         // クライアント情報サーバー
         POOL.execute(() -> {
@@ -91,24 +87,40 @@ public class App {
             }
         });
 
-        try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
-            while (true) {
-                Socket client = serverSocket.accept();
-                String rawAddr = client.getRemoteSocketAddress().toString();
-                String IPstr = rawAddr.substring(1, rawAddr.lastIndexOf(':'));
-                // System.out.println("client addr:" + IPstr);
-                if (Player.checkIP(IPstr)) {
-                    closeQuietly(client);
-                    System.out.println("banned ip connect: " + IPstr);
-                    continue;
+        POOL.execute(() -> {
+            try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
+                while (true) {
+                    Socket client = serverSocket.accept();
+                    String rawAddr = client.getRemoteSocketAddress().toString();
+                    String IPstr = rawAddr.substring(1, rawAddr.lastIndexOf(':'));
+                    // Command.out("client addr:" + IPstr);
+                    if (Player.checkIP(IPstr)) {
+                        closeQuietly(client);
+                        Command.out("banned ip connect: " + IPstr);
+                        continue;
+                    }
+                    client.setTcpNoDelay(true);
+
+                    Command.out(
+                            "Client connected: "
+                                    + client.getRemoteSocketAddress());
+
+                    POOL.execute(() -> handleClient(client));
                 }
-                client.setTcpNoDelay(true);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
 
-                System.out.println(
-                        "Client connected: "
-                                + client.getRemoteSocketAddress());
-
-                POOL.execute(() -> handleClient(client));
+        // Command loop
+        while (true) {
+            String c = Command.in();
+            if (c == "exit") {
+                Command.out("system will exit");
+                POOL.shutdownNow();
+                System.exit(0);
+                break;
             }
         }
     }
@@ -122,7 +134,7 @@ public class App {
              */
             packetAnl.Handshake handshake = packetAnl.readHandshake(client.getInputStream());
 
-            System.out.println(
+            Command.out(
                     "Handshake: host=" + handshake.host()
                             + ", port=" + handshake.port()
                             + ", protocol=" + handshake.protocolVersion()
@@ -135,14 +147,14 @@ public class App {
                     handshake.host().toLowerCase(Locale.ROOT));
 
             if (backend == null) {
-                System.out.println(
+                Command.out(
                         "Unknown host: " + handshake.host());
 
                 closeQuietly(client);
                 return;
             }
 
-            System.out.println(
+            Command.out(
                     "Routing "
                             + handshake.host()
                             + " -> "
@@ -195,7 +207,7 @@ public class App {
                     true));
 
         } catch (IOException e) {
-            System.out.println(
+            Command.out(
                     "Client error: " + e.getMessage());
 
             closeQuietly(client);

@@ -20,7 +20,7 @@ public class pluginS {
         pin = _pin;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", infoHandler);
-        System.out.println("infoHandler wakes up: port=" + port);
+        Command.out("infoHandler wakes up: port=" + port);
         server.start();
     }
 
