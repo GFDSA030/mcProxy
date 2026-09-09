@@ -30,6 +30,17 @@ jobs:
       - name: Build
         run: ./gradlew shadowJar
 
+      - name: Archive previous latest
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view latest >/dev/null 2>&1; then
+            gh release edit latest \
+              --tag "release-${{ github.run_number }}" \
+              --title "Release ${{ github.run_number }}"
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
