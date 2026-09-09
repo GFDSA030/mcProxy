@@ -49,7 +49,7 @@ public class Player {
     public static void banPlayer(String name) {
         bannedPlayer.add(name);
         try {
-            Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
+            Files.write(Path.of("banP.json"), gson.toJson(bannedPlayer).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -58,7 +58,7 @@ public class Player {
     public static void banIP(String ip) {
         bannedIP.add(ip);
         try {
-            Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
+            Files.write(Path.of("banI.json"), gson.toJson(bannedIP).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -67,7 +67,7 @@ public class Player {
     public static void deBanPlayer(String name) {
         bannedPlayer.remove(bannedPlayer.indexOf(name));
         try {
-            Files.write(Path.of("bunP.json"), gson.toJson(bannedPlayer).getBytes());
+            Files.write(Path.of("banP.json"), gson.toJson(bannedPlayer).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -76,7 +76,7 @@ public class Player {
     public static void deBanIP(String ip) {
         bannedIP.remove(bannedIP.indexOf(ip));
         try {
-            Files.write(Path.of("bunI.json"), gson.toJson(bannedIP).getBytes());
+            Files.write(Path.of("banI.json"), gson.toJson(bannedIP).getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
