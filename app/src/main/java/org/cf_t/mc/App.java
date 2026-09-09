@@ -186,6 +186,19 @@ public class App {
         /*
          * pardon
          */
+        Command.register(Commands.literal("pardon")
+                .then(Commands.literal("ip").then(Commands.argument("addr", StringArgumentType.word()).executes(c -> {
+                    String addr = StringArgumentType.getString(c, "addr");
+                    Command.out("pardon: " + addr);
+                    Player.deBanIP(addr);
+                    return 1;
+                })))
+                .then(Commands.literal("name").then(Commands.argument("name", StringArgumentType.word()).executes(c -> {
+                    String name = StringArgumentType.getString(c, "name");
+                    Command.out("pardon: " + name);
+                    Player.deBanPlayer(name);
+                    return 1;
+                }))));
     }
 
     private static void handleClient(Socket client) {
