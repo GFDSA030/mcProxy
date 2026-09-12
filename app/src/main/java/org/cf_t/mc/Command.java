@@ -44,8 +44,8 @@ public class Command {
                 int cursor = line.cursor();
 
                 // SuggestionsBuilder builder = new SuggestionsBuilder(
-                //         input,
-                //         cursor);
+                // input,
+                // cursor);
 
                 ParseResults<Object> parse = dispatcher.parse(
                         input,
@@ -80,10 +80,17 @@ public class Command {
         dispatcher.register(command);
     }
 
+    public static void out(String s) {
+
+        if (reader != null) {
+            reader.printAbove(s);
+        }
+    }
+
     public static void out(Object s) {
 
         if (reader != null) {
-            reader.printAbove(s.toString());
+            reader.printAbove(JsonUtil.GSON.toJson(s));
         }
     }
 

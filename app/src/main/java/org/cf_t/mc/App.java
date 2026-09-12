@@ -51,29 +51,7 @@ public class App {
         /*
          * 設定ロード
          */
-        try {
-            if (!Files.exists(Path.of("setting.json"))) {
-                Command.out("setting.json not found");
-            }
-            Setting.Config config = Setting.load("setting.json");
-
-            Command.out(config.serverPort());
-            LISTEN_PORT = config.serverPort();
-            infoLISTEN_PORT = config.infoPort();
-            infoPIN = config.pin();
-
-            for (Setting.SvConfig server : config.routings()) {
-                Command.out(server.host());
-                Command.out(server.remoteHost());
-                Command.out(server.port());
-                ROUTES.put(
-                        server.host(),
-                        new Backend(server.remoteHost(), server.port()));
-            }
-        } catch (IOException e) {
-            Command.out("error with ioException");
-            return;
-        }
+        loadSetting();
 
         Command.out("Minecraft Host Proxy");
         Command.out("Listening on 0.0.0.0:" + LISTEN_PORT);
@@ -203,8 +181,44 @@ public class App {
          * reload
          */
         Command.register(Commands.literal("reload").executes(c -> {
+            Player.load();
+            loadSetting();
             return 1;
         }));
+        /*
+         * route
+         */
+        Command.register(Commands.literal("route").then(Commands.literal("list").executes(c -> {
+            Command.out(ROUTES);
+            return 1;
+        })));
+    }
+
+    private static void loadSetting() {
+        try {
+            if (!Files.exists(Path.of("setting.json"))) {
+                Command.out("setting.json not found");
+            }
+            Setting.Config config = Setting.load("setting.json");
+
+            Command.out(config.serverPort());
+            LISTEN_PORT = config.serverPort();
+            infoLISTEN_PORT = config.infoPort();
+            infoPIN = config.pin();
+
+            for (Setting.SvConfig server : config.routings()) {
+                // Command.out(server.host());
+                // Command.out(server.remoteHost());
+                // Command.out(server.port());
+                Command.out(server);
+                ROUTES.put(
+                        server.host(),
+                        new Backend(server.remoteHost(), server.port()));
+            }
+        } catch (IOException e) {
+            Command.out("error with ioException");
+            return;
+        }
     }
 
     private static void handleClient(Socket client) {
