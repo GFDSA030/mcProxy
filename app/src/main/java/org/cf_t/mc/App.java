@@ -199,6 +199,12 @@ public class App {
                     Player.deBanPlayer(name);
                     return 1;
                 }))));
+        /*
+         * reload
+         */
+        Command.register(Commands.literal("reload").executes(c -> {
+            return 1;
+        }));
     }
 
     private static void handleClient(Socket client) {
